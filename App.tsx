@@ -362,7 +362,6 @@ const App: React.FC = () => {
   const renderSettingsScreen = () => {
       return (
           <div id="scroll-settings" className="h-full overflow-y-auto hide-scrollbar pb-32 p-6 space-y-8">
-                {/* ... existing profile content ... */}
                 <div className="flex items-center justify-between px-2">
                 <div className="flex items-center gap-4">
                     <div className="size-20 rounded-full bg-primary/20 border-2 border-primary/20 flex items-center justify-center shadow-lg shadow-primary/10 overflow-hidden">
@@ -403,6 +402,18 @@ const App: React.FC = () => {
                     </div>
                     </div>
                 </div>
+                
+                {userProfile?.timetableImageUrl && (
+                  <div className="p-5 rounded-3xl bg-teal-500/10 border border-teal-500/20 space-y-3">
+                      <div className="flex items-center gap-3">
+                          <span className="material-symbols-outlined text-teal-400">image</span>
+                          <h3 className="text-[10px] font-black uppercase tracking-widest text-teal-400">Official Timetable Linked</h3>
+                      </div>
+                      <a href={userProfile.timetableImageUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-teal-300 underline break-all line-clamp-1">
+                          {userProfile.timetableImageUrl}
+                      </a>
+                  </div>
+                )}
                 </div>
 
                 <div className="space-y-4">
@@ -414,7 +425,6 @@ const App: React.FC = () => {
                       </div>
                       <span className="font-bold text-white">Instagram</span>
                     </a>
-                    {/* ... other social links ... */}
                   </div>
                 </div>
                 
@@ -456,6 +466,7 @@ const App: React.FC = () => {
                 key="planner"
                 classes={classes} 
                 examSchedules={examSchedules}
+                userProfile={userProfile}
                 onOpenAddClass={() => setIsClassModalOpen(true)}
                 onOpenAddExamGroup={() => setIsAddExamGroupModalOpen(true)}
                 onOpenAddSubject={(groupId) => setActiveExamGroupId(groupId)}
@@ -513,10 +524,18 @@ const App: React.FC = () => {
       {showOnboarding && <OnboardingScreen onComplete={(profile) => { setUserProfile(profile); setShowOnboarding(false); }} onClose={() => setShowOnboarding(false)} />}
       {showEditProfile && userProfile && <ProfileEditModal currentProfile={userProfile} onClose={() => setShowEditProfile(false)} onUpdate={(updates) => { setUserProfile(prev => prev ? { ...prev, ...updates } : null); setShowEditProfile(false); }} />}
       {showLegal && (
-        <div className="fixed inset-0 z-[1200] bg-black/90 backdrop-blur-xl p-6 flex flex-col animate-fade-in">
-           {/* ... Legal modal content (omitted for brevity) ... */}
-           <div className="flex items-center justify-between mb-6"><h2 className="text-xl font-bold text-white">Terms & Policy</h2><button onClick={() => setShowLegal(null)} className="size-10 rounded-full bg-white/5 flex items-center justify-center"><span className="material-symbols-outlined text-slate-400">close</span></button></div>
-           <div className="text-slate-400 text-sm">Standard terms apply. Data is local.</div>
+        <div className="fixed inset-0 z-[1200] bg-black/90 backdrop-blur-xl p-6 flex flex-col animate-fade-in items-center justify-center">
+           <div className="w-full max-w-sm bg-[#111c26] rounded-3xl p-6 border border-white/10 relative">
+               <div className="flex items-center justify-between mb-6">
+                   <h2 className="text-xl font-bold text-white">Terms & Policy</h2>
+                   <button onClick={() => setShowLegal(null)} className="size-8 rounded-full bg-white/5 flex items-center justify-center"><span className="material-symbols-outlined text-slate-400">close</span></button>
+               </div>
+               <div className="text-slate-400 text-sm space-y-4">
+                   <p>This is a local-only productivity app. No data is sent to any server. Your data resides in your browser's local storage.</p>
+                   <p className="text-[10px] uppercase font-bold text-slate-600">License</p>
+                   <p>Cosmic Campus Free License.</p>
+               </div>
+           </div>
         </div>
       )}
       
@@ -538,13 +557,132 @@ const App: React.FC = () => {
   );
 };
 
-const OnboardingScreen: React.FC<{ onComplete: (profile: UserProfile) => void, onClose: () => void }> = ({ onComplete, onClose }) => {
-    // ... (Placeholder content preserved) ...
-    return null; 
+const OnboardingScreen: React.FC<{ onComplete: (profile: UserProfile) => void, onClose: () => void }> = ({ onComplete }) => {
+  const [name, setName] = useState('');
+  const [college, setCollege] = useState('');
+  const [department, setDepartment] = useState('');
+  const [year, setYear] = useState('');
+  const [gender, setGender] = useState<'male' | 'female'>('male');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (name && college && department && year) {
+      onComplete({
+        name,
+        college,
+        department,
+        year,
+        gender,
+        joinedDate: new Date().toISOString(),
+        xp: 0,
+        level: 0,
+        timetableImageUrl: ''
+      });
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[1000] bg-[#101922] flex flex-col items-center justify-center p-6 animate-fade-in">
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center space-y-2">
+            <div className="size-24 rounded-3xl bg-primary/20 flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(13,127,242,0.3)]">
+                <span className="material-symbols-outlined text-5xl text-primary">rocket_launch</span>
+            </div>
+            <h1 className="text-4xl font-black text-white tracking-tight">Welcome, Explorer</h1>
+            <p className="text-slate-400 font-bold">Setup your cosmic profile to begin.</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-4 bg-white/5 p-6 rounded-[32px] border border-white/10 shadow-2xl">
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Full Name</label>
+                    <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full bg-[#1e2a36] border border-white/10 rounded-2xl p-4 text-white font-bold outline-none focus:border-primary transition-all" placeholder="John Doe" required />
+                </div>
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">College Name</label>
+                    <input type="text" value={college} onChange={e => setCollege(e.target.value)} className="w-full bg-[#1e2a36] border border-white/10 rounded-2xl p-4 text-white font-bold outline-none focus:border-primary transition-all" placeholder="Stellar Institute" required />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Department</label>
+                        <input type="text" value={department} onChange={e => setDepartment(e.target.value)} className="w-full bg-[#1e2a36] border border-white/10 rounded-2xl p-4 text-white font-bold outline-none focus:border-primary transition-all" placeholder="CSE" required />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Year</label>
+                        <select value={year} onChange={e => setYear(e.target.value)} className="w-full bg-[#1e2a36] border border-white/10 rounded-2xl p-4 text-white font-bold outline-none focus:border-primary transition-all appearance-none" required>
+                            <option value="" disabled>Select</option>
+                            <option value="I Year">I Year</option>
+                            <option value="II Year">II Year</option>
+                            <option value="III Year">III Year</option>
+                            <option value="IV Year">IV Year</option>
+                        </select>
+                    </div>
+                </div>
+                <div className="flex gap-4">
+                    <button type="button" onClick={() => setGender('male')} className={`flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-wider border transition-all ${gender === 'male' ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/5 text-slate-500'}`}>Male</button>
+                    <button type="button" onClick={() => setGender('female')} className={`flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-wider border transition-all ${gender === 'female' ? 'bg-pink-500 border-pink-500 text-white' : 'bg-white/5 border-white/5 text-slate-500'}`}>Female</button>
+                </div>
+            </div>
+            <button type="submit" className="w-full py-5 rounded-2xl bg-gradient-to-r from-primary to-blue-600 text-white font-black text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-2">
+                Launch Journey
+                <span className="material-symbols-outlined">arrow_forward</span>
+            </button>
+        </form>
+      </div>
+    </div>
+  );
 };
+
 const ProfileEditModal: React.FC<{ currentProfile: UserProfile, onClose: () => void, onUpdate: (updates: Partial<UserProfile>) => void }> = ({ currentProfile, onClose, onUpdate }) => {
-    // ... (Placeholder content preserved) ...
-    return null;
+  const [name, setName] = useState(currentProfile.name);
+  const [college, setCollege] = useState(currentProfile.college);
+  const [department, setDepartment] = useState(currentProfile.department);
+  const [year, setYear] = useState(currentProfile.year);
+  const [gender, setGender] = useState(currentProfile.gender);
+  const [timetableUrl, setTimetableUrl] = useState(currentProfile.timetableImageUrl || '');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onUpdate({ name, college, department, year, gender, timetableImageUrl: timetableUrl });
+  };
+
+  return (
+    <div className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+        <div className="w-full max-w-sm bg-[#111c26] rounded-[40px] p-8 border border-white/10 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-black text-white">Edit Profile</h2>
+                <button onClick={onClose} className="size-9 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10"><span className="material-symbols-outlined text-slate-400">close</span></button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Full Name</label>
+                    <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full bg-[#1e2a36] border border-white/10 rounded-2xl p-4 text-white font-bold outline-none focus:border-primary transition-all" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Dept</label>
+                        <input type="text" value={department} onChange={e => setDepartment(e.target.value)} className="w-full bg-[#1e2a36] border border-white/10 rounded-2xl p-4 text-white font-bold outline-none focus:border-primary transition-all" />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Year</label>
+                        <select value={year} onChange={e => setYear(e.target.value)} className="w-full bg-[#1e2a36] border border-white/10 rounded-2xl p-4 text-white font-bold outline-none focus:border-primary transition-all appearance-none">
+                            <option value="I Year">I Year</option>
+                            <option value="II Year">II Year</option>
+                            <option value="III Year">III Year</option>
+                            <option value="IV Year">IV Year</option>
+                        </select>
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Official Timetable Image URL</label>
+                    <input type="text" value={timetableUrl} onChange={e => setTimetableUrl(e.target.value)} placeholder="https://..." className="w-full bg-[#1e2a36] border border-white/10 rounded-2xl p-4 text-white font-bold outline-none focus:border-primary transition-all" />
+                    <p className="text-[9px] text-slate-600 ml-1">Paste a direct link to an image to view it in Planner.</p>
+                </div>
+                <button type="submit" className="w-full py-4 rounded-2xl bg-primary text-white font-black shadow-lg shadow-primary/20 mt-2">Save Changes</button>
+            </form>
+        </div>
+    </div>
+  );
 };
 
 export default App;

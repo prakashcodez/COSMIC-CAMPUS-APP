@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { ClassSession, ExamSchedule, ExamSubject } from '../types';
+import { ClassSession, ExamSchedule, ExamSubject, UserProfile } from '../types';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -34,6 +34,7 @@ const SUBJECT_COLORS = [
 interface TimetableScreenProps {
   classes: ClassSession[];
   examSchedules: ExamSchedule[];
+  userProfile: UserProfile | null;
   onOpenAddClass: () => void;
   onOpenAddExamGroup: () => void;
   onOpenAddSubject: (groupId: string) => void;
@@ -47,7 +48,7 @@ interface TimetableScreenProps {
 }
 
 const TimetableScreen: React.FC<TimetableScreenProps> = ({ 
-    classes, examSchedules, 
+    classes, examSchedules, userProfile,
     onOpenAddClass, onOpenAddExamGroup, onOpenAddSubject, 
     onEditClass, onEditSubject, onDeleteSubject, onDeleteExamGroup, onToggleConfirmGroup, onEditExamGroup 
 }) => {
@@ -58,6 +59,7 @@ const TimetableScreen: React.FC<TimetableScreenProps> = ({
   
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'group' | 'subject', id: string, parentId?: string } | null>(null);
   const [menuOpenGroupId, setMenuOpenGroupId] = useState<string | null>(null);
+  const [showImageModal, setShowImageModal] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000); 
@@ -152,44 +154,54 @@ const TimetableScreen: React.FC<TimetableScreenProps> = ({
   return (
     <div className="p-4 space-y-4 h-full flex flex-col relative" onClick={() => setMenuOpenGroupId(null)}>
       <div className="flex items-center justify-between px-2 pt-2">
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-black tracking-tight text-white drop-shadow-[0_0_15px_rgba(13,127,242,0.4)]">Planner</h1>
           
-          <div className="flex gap-3 mt-4">
+          <div className="flex gap-3 mt-4 overflow-x-auto hide-scrollbar">
               <button 
                 onClick={() => setViewMode('classes')}
-                className={`relative px-5 py-3 rounded-2xl border transition-all duration-300 overflow-hidden group ${
+                className={`relative px-4 py-2 rounded-xl border transition-all duration-300 overflow-hidden group shrink-0 ${
                     viewMode === 'classes' 
                     ? 'bg-primary/20 border-primary/50 shadow-[0_0_25px_rgba(13,127,242,0.3)]' 
                     : 'bg-white/5 border-white/5 opacity-60 hover:opacity-100'
                 }`}
               >
                   {viewMode === 'classes' && <div className="absolute inset-0 bg-primary/10 animate-pulse"></div>}
-                  <span className={`relative z-10 text-[10px] font-black uppercase tracking-widest ${viewMode === 'classes' ? 'text-white' : 'text-slate-400'}`}>Class Schedule</span>
+                  <span className={`relative z-10 text-[10px] font-black uppercase tracking-widest ${viewMode === 'classes' ? 'text-white' : 'text-slate-400'}`}>Classes</span>
               </button>
               
               <button 
                 onClick={() => setViewMode('exams')}
-                className={`relative px-5 py-3 rounded-2xl border transition-all duration-300 overflow-hidden group ${
+                className={`relative px-4 py-2 rounded-xl border transition-all duration-300 overflow-hidden group shrink-0 ${
                     viewMode === 'exams' 
                     ? 'bg-rose-500/20 border-rose-500/50 shadow-[0_0_25px_rgba(244,63,94,0.3)]' 
                     : 'bg-white/5 border-white/5 opacity-60 hover:opacity-100'
                 }`}
               >
                   {viewMode === 'exams' && <div className="absolute inset-0 bg-rose-500/10 animate-pulse"></div>}
-                  <span className={`relative z-10 text-[10px] font-black uppercase tracking-widest ${viewMode === 'exams' ? 'text-white' : 'text-slate-400'}`}>Exam Schedule</span>
+                  <span className={`relative z-10 text-[10px] font-black uppercase tracking-widest ${viewMode === 'exams' ? 'text-white' : 'text-slate-400'}`}>Exams</span>
               </button>
+
+              {userProfile?.timetableImageUrl && (
+                <button 
+                  onClick={() => setShowImageModal(true)}
+                  className="relative px-4 py-2 rounded-xl border border-teal-500/30 bg-teal-500/10 hover:bg-teal-500/20 transition-all shrink-0 flex items-center gap-2"
+                >
+                    <span className="material-symbols-outlined text-sm text-teal-400">image</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-teal-400">Official</span>
+                </button>
+              )}
           </div>
         </div>
         
         {/* FAB */}
         <button 
           onClick={viewMode === 'classes' ? onOpenAddClass : onOpenAddExamGroup}
-          className={`size-14 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgba(0,0,0,0.5)] active:scale-90 transition-all hover:scale-105 border-4 border-[#101922] ${
+          className={`size-12 rounded-full flex items-center justify-center shadow-[0_8px_30px_rgba(0,0,0,0.5)] active:scale-90 transition-all hover:scale-105 border-2 border-[#101922] ${
               viewMode === 'classes' ? 'bg-primary text-white shadow-primary/30' : 'bg-rose-500 text-white shadow-rose-500/30'
           }`}
         >
-          <span className="material-symbols-outlined text-3xl font-bold">add</span>
+          <span className="material-symbols-outlined text-2xl font-bold">add</span>
         </button>
       </div>
 
@@ -476,6 +488,26 @@ const TimetableScreen: React.FC<TimetableScreenProps> = ({
                           setDeleteConfirm(null); 
                       }} className="py-4 rounded-2xl bg-red-500 text-white font-bold text-xs shadow-lg shadow-red-500/20 hover:brightness-110 transition-all">Delete</button>
                   </div>
+              </div>
+          </div>
+      )}
+
+      {/* Official Timetable Image Modal */}
+      {showImageModal && userProfile?.timetableImageUrl && (
+          <div className="fixed inset-0 z-[300] bg-black/95 flex flex-col animate-zoom-in" onClick={() => setShowImageModal(false)}>
+              <div className="p-4 flex justify-between items-center absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 to-transparent">
+                  <h3 className="text-white font-bold text-lg">Official Schedule</h3>
+                  <button onClick={() => setShowImageModal(false)} className="size-10 rounded-full bg-white/10 flex items-center justify-center text-white">
+                      <span className="material-symbols-outlined">close</span>
+                  </button>
+              </div>
+              <div className="flex-1 flex items-center justify-center p-2 overflow-auto">
+                  <img 
+                      src={userProfile.timetableImageUrl} 
+                      alt="Official Timetable" 
+                      className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" 
+                      onClick={e => e.stopPropagation()}
+                  />
               </div>
           </div>
       )}

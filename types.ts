@@ -114,6 +114,7 @@ export interface UserProfile {
   joinedDate: string;
   xp: number;
   level: number;
+  timetableImageUrl?: string;
 }
 
 export interface CampusChecklistItem {
